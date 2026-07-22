@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - Jenka Project</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--p:#4f46e5;--ph:#4338ca;--bg:#f3f4f6;--c:#ffffff;--t:#1f2937;--ts:#6b7280;--b:#d1d5db;--r:12px;}
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif}
+    body{background:var(--bg);color:var(--t);height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .login-card{background:var(--c);width:100%;max-width:400px;padding:40px 30px;border-radius:var(--r);box-shadow:0 10px 25px -5px rgba(0,0,0,0.1);text-align:center}
+    .login-card h1{font-size:24px;font-weight:700;margin-bottom:8px;color:var(--t)}
+    .login-card p{color:var(--ts);font-size:14px;margin-bottom:30px}
+    .form-group{text-align:left;margin-bottom:20px}
+    label{display:block;font-size:13px;font-weight:600;margin-bottom:8px;color:#374151}
+    input[type=text],input[type=password]{width:100%;padding:12px 15px;border:1px solid var(--b);border-radius:8px;font-size:14px;outline:none;transition:border 0.2s}
+    input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(79,70,229,0.15)}
+    .btn{width:100%;background:var(--p);color:var(--c);border:none;padding:14px;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background 0.2s;display:flex;justify-content:center;align-items:center;gap:10px}
+    .btn:hover{background:var(--ph)}
+    .btn:disabled{opacity:0.7;cursor:not-allowed}
+    .loader{width:18px;height:18px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;display:none}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .error-msg{color:#ef4444;background:#fee2e2;padding:10px;border-radius:6px;font-size:13px;font-weight:500;margin-bottom:20px;display:none}
+  </style>
+</head>
+<body>
+
+  <div class="login-card">
+    <h1>Jenka Admin</h1>
+    <p>Masukkan kredensial untuk mengakses dashboard</p>
+
+    <div id="errorBox" class="error-msg">Username atau Password salah!</div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="username" required placeholder="Masukkan username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" required placeholder="Masukkan password">
+      </div>
+      
+      <button type="submit" id="btnSubmit" class="btn">
+        <span id="btnText">Masuk Dashboard</span>
+        <span id="loader" class="loader"></span>
+      </button>
+    </form>
+  </div>
+
+  <script>
+    if (localStorage.getItem('jenka_admin_token')) {
+      window.location.href = '/dashboard.html';
+    }
+
+    const form = document.getElementById('loginForm');
+    const btn = document.getElementById('btnSubmit');
+    const btnText = document.getElementById('btnText');
+    const loader = document.getElementById('loader');
+    const errorBox = document.getElementById('errorBox');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      btn.disabled = true;
+      btnText.textContent = 'Memverifikasi...';
+      loader.style.display = 'inline-block';
+      errorBox.style.display = 'none';
+
+      const payload = {
+        action: 'login',
+        payload: {
+          username: document.getElementById('username').value,
+          password: document.getElementById('password').value
+        }
+      };
+
+      try {
+        const response = await fetch('/api/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+
+        if (data.status === 'success') {
+          localStorage.setItem('jenka_admin_token', data.token);
+          window.location.href = '/dashboard.html';
+        } else {
+          showError(data.message || 'Kredensial tidak valid');
+        }
+      } catch (error) {
+        showError('Gagal terhubung ke server');
+      }
+    });
+
+    function showError(msg) {
+      errorBox.textContent = msg;
+      errorBox.style.display = 'block';
+      btn.disabled = false;
+      btnText.textContent = 'Masuk Dashboard';
+      loader.style.display = 'none';
+    }
+  </script>
+</body>
+</html>
