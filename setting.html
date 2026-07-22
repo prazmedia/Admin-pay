@@ -91,29 +91,30 @@
     </div>
 
     <!-- 2. Kategori Harga -->
+    <!-- 2. Kategori Harga -->
     <div class="card">
       <h2>2. Kategori & Harga Dasar</h2>
-      <p style="font-size:12px;color:var(--ts);margin-bottom:15px;">Settingan harga ini akan digunakan di halaman order. Pastikan nama kategori sesuai (basic, premium, dll).</p>
-      <table>
-        <thead>
-          <tr>
-            <th>Nama Kategori</th>
-            <th>Harga (Rp)</th>
-            <th width="100">Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="tableCategory">
-          <!-- Render by JS -->
-        </tbody>
-      </table>
-      <div class="grid-2" style="align-items:end;">
-        <div class="form-group"><input type="text" id="new_cat_name" placeholder="Nama Kategori Baru"></div>
-        <div class="form-group">
-          <div style="display:flex;gap:10px">
-            <input type="number" id="new_cat_price" placeholder="Harga (Misal: 50000)">
-            <button class="btn" onclick="addCategory()">Tambah</button>
-          </div>
-        </div>
+      <p style="font-size:12px;color:var(--ts);margin-bottom:15px;">Atur harga berdasarkan tipe undangan. Pastikan nama kategori sesuai (basic, premium, dll).</p>
+      <div style="overflow-x:auto; margin-bottom:15px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Nama Kategori</th>
+              <th>Harga (Tanpa Foto)</th>
+              <th>Harga (Dengan Foto)</th>
+              <th width="80">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tableCategory">
+            <!-- Render by JS -->
+          </tbody>
+        </table>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:center;">
+        <input type="text" id="new_cat_name" placeholder="Kategori (Misal: Luxury)">
+        <input type="number" id="new_cat_price_tanpa" placeholder="Harga Tanpa Foto">
+        <input type="number" id="new_cat_price_dengan" placeholder="Harga Dengan Foto">
+        <button class="btn" onclick="addCategory()">Tambah</button>
       </div>
     </div>
 
@@ -141,6 +142,32 @@
       </div>
     </div>
 
+    <!-- 4. Voucher Diskon -->
+    <div class="card">
+      <h2>4. Manajemen Voucher Diskon</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Kode</th>
+            <th>Tipe</th>
+            <th>Nilai</th>
+            <th>Kuota</th>
+            <th width="80">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tableVoucher">
+          <!-- Render by JS -->
+        </tbody>
+      </table>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;align-items:center;">
+        <input type="text" id="v_kode" placeholder="KODEPROMO">
+        <select id="v_tipe"><option value="persen">Persen (%)</option><option value="nominal">Nominal (Rp)</option></select>
+        <input type="number" id="v_nilai" placeholder="Nilai">
+        <input type="number" id="v_kuota" placeholder="Kuota">
+        <button class="btn" onclick="addVoucher()">Tambah</button>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -163,6 +190,7 @@
     // STATE DATA
     let categories = [];
     let payments = [];
+    let vouchers = []; 
 
     // FUNGSI LOAD DATA (Placeholder untuk integrasi GAS)
     async function loadSettings() {
@@ -195,6 +223,7 @@
     }
 
     // --- KATEGORI LOGIC ---
+    // --- KATEGORI LOGIC ---
     function renderCategories() {
       const tbody = document.getElementById('tableCategory');
       tbody.innerHTML = '';
@@ -202,7 +231,8 @@
         tbody.innerHTML += `
           <tr>
             <td>${cat.nama}</td>
-            <td>Rp ${Number(cat.harga).toLocaleString('id-ID')}</td>
+            <td>Rp ${Number(cat.harga_tanpa || 0).toLocaleString('id-ID')}</td>
+            <td>Rp ${Number(cat.harga_dengan || 0).toLocaleString('id-ID')}</td>
             <td><button class="btn-danger" onclick="removeCategory(${index})">Hapus</button></td>
           </tr>
         `;
@@ -211,12 +241,21 @@
 
     function addCategory() {
       const name = document.getElementById('new_cat_name').value.trim();
-      const price = document.getElementById('new_cat_price').value.trim();
-      if(name && price) {
-        categories.push({ nama: name, harga: price });
+      const priceTanpa = document.getElementById('new_cat_price_tanpa').value.trim();
+      const priceDengan = document.getElementById('new_cat_price_dengan').value.trim();
+      
+      if(name && priceTanpa && priceDengan) {
+        categories.push({ 
+          nama: name, 
+          harga_tanpa: priceTanpa, 
+          harga_dengan: priceDengan 
+        });
         document.getElementById('new_cat_name').value = '';
-        document.getElementById('new_cat_price').value = '';
+        document.getElementById('new_cat_price_tanpa').value = '';
+        document.getElementById('new_cat_price_dengan').value = '';
         renderCategories();
+      } else {
+        showToast('Mohon lengkapi nama dan kedua harga!', true);
       }
     }
 
@@ -224,7 +263,6 @@
       categories.splice(index, 1);
       renderCategories();
     }
-
     // --- PAYMENT LOGIC ---
     function renderPayments() {
       const tbody = document.getElementById('tablePayment');
@@ -297,6 +335,28 @@
       btn.disabled = false;
       loader.style.display = 'none';
     }
+    // Fungsi Tambah Voucher
+    function addVoucher() {
+      const kode = document.getElementById('v_kode').value.trim().toUpperCase();
+      const tipe = document.getElementById('v_tipe').value;
+      const nilai = document.getElementById('v_nilai').value;
+      const kuota = document.getElementById('v_kuota').value;
+      
+      if(kode && nilai && kuota) {
+        vouchers.push({ kode, tipe, nilai, kuota, terpakai: 0 });
+        renderVouchers();
+        // Reset form...
+      }
+    }
+
+    function renderVouchers() {
+      const tbody = document.getElementById('tableVoucher');
+      tbody.innerHTML = '';
+      vouchers.forEach((v, i) => {
+        tbody.innerHTML += `<tr><td>${v.kode}</td><td>${v.tipe}</td><td>${v.nilai}</td><td>${v.terpakai}/${v.kuota}</td><td><button class="btn-danger" onclick="vouchers.splice(${i},1); renderVouchers();">Hapus</button></td></tr>`;
+      });
+    }
+    
 
     window.onload = loadSettings;
   </script>
