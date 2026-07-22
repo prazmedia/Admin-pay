@@ -178,21 +178,52 @@
       }
     }
 
-    function showDetail(index) {
+function showDetail(index) {
       const order = ordersData[index];
       let detailHtml = `
-        <p><strong>Kategori:</strong> ${order.kategori} (${order.jenis})</p>
-        <p><strong>Nominal Asli:</strong> Rp ${order.hargaDasar.toLocaleString('id-ID')}</p>
-        <p><strong>Kode Unik:</strong> ${order.kodeUnik}</p>
-        <hr style="border:0;border-top:1px dashed #e5e7eb;margin:15px 0;">
-        <h4 style="margin-bottom:10px;color:#1f2937;">Data Undangan (JSON)</h4>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px; font-size:13px;">
+          <div><strong>Kategori:</strong> ${order.kategori} (${order.jenis})</div>
+          <div><strong>Total Bayar:</strong> Rp ${order.totalBayar.toLocaleString('id-ID')}</div>
+        </div>
+        <h4 style="margin-bottom:10px;color:#1f2937;border-bottom:1px solid #e5e7eb;padding-bottom:5px;">Formulir Pemesanan</h4>
       `;
       
       try {
-        const jsonDetail = JSON.parse(order.detailUndangan);
-        detailHtml += `<pre style="background:#f3f4f6;padding:10px;border-radius:8px;font-size:12px;overflow-x:auto;">${JSON.stringify(jsonDetail, null, 2)}</pre>`;
+        const d = JSON.parse(order.detailUndangan);
+        
+        // Mempelai
+        detailHtml += `
+          <p><strong>Tema:</strong> ${d.kode_tema} | <strong>Urutan:</strong> ${d.mempelai.urutan}</p>
+          <div style="background:#f9fafb; padding:10px; border-radius:6px; margin:10px 0; font-size:12px;">
+            <p>👨 <strong>Pria:</strong> ${d.mempelai.pria.lengkap} (${d.mempelai.pria.panggilan}) - ${d.mempelai.pria.ortu}</p>
+            <p>👩 <strong>Wanita:</strong> ${d.mempelai.wanita.lengkap} (${d.mempelai.wanita.panggilan}) - ${d.mempelai.wanita.ortu}</p>
+          </div>
+        `;
+
+        // Acara (Dilakukan Loop)
+        detailHtml += `<p style="font-weight:600; margin-top:10px;">Jadwal Acara:</p><ul style="font-size:12px; padding-left:15px;">`;
+        d.acara.forEach((ac, i) => {
+          detailHtml += `<li><strong>${ac.nama}:</strong> ${ac.tanggal} (${ac.jam}) di ${ac.tempat}</li>`;
+        });
+        detailHtml += `</ul>`;
+
+        // Pelengkap
+        detailHtml += `
+          <p style="font-weight:600; margin-top:10px;">Pelengkap:</p>
+          <table style="width:100%; font-size:12px; text-align:left;">
+            <tr><th width="100">Musik</th><td>${d.pelengkap.music}</td></tr>
+            <tr><th>RSVP/WA</th><td>${d.pelengkap.rsvp} / ${d.pelengkap.wa_konfirmasi}</td></tr>
+            <tr><th>Warna</th><td>
+              <span style="display:inline-block;width:15px;height:15px;background:${d.pelengkap.dresscode[0]}"></span>
+              <span style="display:inline-block;width:15px;height:15px;background:${d.pelengkap.dresscode[1]}"></span>
+              <span style="display:inline-block;width:15px;height:15px;background:${d.pelengkap.dresscode[2]}"></span>
+              <span style="display:inline-block;width:15px;height:15px;background:${d.pelengkap.dresscode[3]}"></span>
+            </td></tr>
+          </table>
+        `;
+
       } catch(e) {
-        detailHtml += `<p>Data detail tidak dapat diproses.</p>`;
+        detailHtml += `<p style="color:red">Gagal membaca detail formulir.</p>`;
       }
 
       document.getElementById('modalOrderId').textContent = '#' + order.id;
