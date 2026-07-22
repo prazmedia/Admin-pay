@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Setting - Jenka Project</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* CSS Native Minimalis - Sama dengan Dashboard */
+    :root{--p:#4f46e5;--ph:#4338ca;--bg:#f3f4f6;--c:#ffffff;--t:#1f2937;--ts:#6b7280;--b:#e5e7eb;--succ:#10b981;--danger:#ef4444;--r:12px;}
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif}
+    body{background:var(--bg);color:var(--t);line-height:1.5}
+    .navbar{background:var(--c);padding:15px 20px;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+    .nav-brand{font-weight:800;font-size:18px;color:var(--p)}
+    .nav-links a{margin-left:15px;text-decoration:none;color:var(--ts);font-weight:600;font-size:14px;transition:color 0.2s}
+    .nav-links a.active,.nav-links a:hover{color:var(--p)}
+    
+    .container{max-width:900px;margin:20px auto;padding:0 20px}
+    .page-header{margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
+    .page-header h1{font-size:22px}
+    
+    .card{background:var(--c);padding:25px;border-radius:var(--r);box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);border:1px solid var(--b);margin-bottom:25px}
+    .card h2{font-size:16px;color:var(--p);border-bottom:1px solid var(--b);padding-bottom:10px;margin-bottom:20px}
+    
+    .form-group{margin-bottom:15px}
+    label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#374151}
+    input[type=text],input[type=number],textarea{width:100%;padding:10px 12px;border:1px solid var(--b);border-radius:6px;font-size:14px;outline:none;font-family:inherit}
+    input:focus,textarea:focus{border-color:var(--p)}
+    textarea{resize:vertical;min-height:80px}
+    
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+    
+    .btn{background:var(--p);color:var(--c);border:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;transition:0.2s}
+    .btn:hover{background:var(--ph)}
+    .btn-succ{background:var(--succ)}
+    .btn-succ:hover{background:#059669}
+    .btn-danger{background:var(--danger);padding:6px 12px;font-size:12px}
+    
+    table{width:100%;border-collapse:collapse;margin-bottom:15px}
+    th,td{padding:12px 15px;text-align:left;border-bottom:1px solid var(--b);font-size:14px}
+    th{background:#f9fafb;font-weight:600;color:var(--ts)}
+    
+    #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:1100}
+    .loader{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;display:none;vertical-align:middle;margin-left:5px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+
+  <div id="toast">Pesan</div>
+
+  <!-- Navbar -->
+  <div class="navbar">
+    <div class="nav-brand">Jenka Admin</div>
+    <div class="nav-links">
+      <a href="/dashboard.html">Dashboard</a>
+      <a href="/setting.html" class="active">Setting</a>
+      <a href="#" onclick="logout()">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="page-header">
+      <h1>Pengaturan Sistem</h1>
+      <button class="btn btn-succ" onclick="saveAllSettings()" id="btnSaveAll">
+        Simpan Semua Perubahan <span class="loader" id="loaderSave"></span>
+      </button>
+    </div>
+
+    <!-- 1. General Settings -->
+    <div class="card">
+      <h2>1. Pengaturan Dasar</h2>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Nomor WhatsApp Admin (Format: 628...)</label>
+          <input type="text" id="set_wa" placeholder="628123456789">
+        </div>
+        <div class="form-group">
+          <label>Waktu Countdown (Menit)</label>
+          <input type="number" id="set_countdown" placeholder="15">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>URL Halaman Payment (Base URL)</label>
+        <input type="text" id="set_url" placeholder="https://domainanda.com/payment.html">
+      </div>
+      <div class="form-group">
+        <label>String QRIS Utama</label>
+        <textarea id="set_qris" placeholder="Paste kode QRIS panjang di sini..."></textarea>
+      </div>
+    </div>
+
+    <!-- 2. Kategori Harga -->
+    <div class="card">
+      <h2>2. Kategori & Harga Dasar</h2>
+      <p style="font-size:12px;color:var(--ts);margin-bottom:15px;">Settingan harga ini akan digunakan di halaman order. Pastikan nama kategori sesuai (basic, premium, dll).</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Nama Kategori</th>
+            <th>Harga (Rp)</th>
+            <th width="100">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tableCategory">
+          <!-- Render by JS -->
+        </tbody>
+      </table>
+      <div class="grid-2" style="align-items:end;">
+        <div class="form-group"><input type="text" id="new_cat_name" placeholder="Nama Kategori Baru"></div>
+        <div class="form-group">
+          <div style="display:flex;gap:10px">
+            <input type="number" id="new_cat_price" placeholder="Harga (Misal: 50000)">
+            <button class="btn" onclick="addCategory()">Tambah</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Metode Pembayaran -->
+    <div class="card">
+      <h2>3. Rekening / E-Wallet</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Metode (Bank/E-Wallet)</th>
+            <th>Nomor Rekening</th>
+            <th>Atas Nama</th>
+            <th width="100">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tablePayment">
+          <!-- Render by JS -->
+        </tbody>
+      </table>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:center;">
+        <input type="text" id="new_pay_method" placeholder="BCA / DANA">
+        <input type="text" id="new_pay_no" placeholder="Nomor Rekening">
+        <input type="text" id="new_pay_name" placeholder="Atas Nama">
+        <button class="btn" onclick="addPayment()">Tambah</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    if (!localStorage.getItem('jenka_admin_token')) {
+      window.location.href = '/login.html';
+    }
+
+    function logout() {
+      localStorage.removeItem('jenka_admin_token');
+      window.location.href = '/login.html';
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.style.opacity = '1';
+      setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+    }
+
+    // STATE DATA
+    let categories = [];
+    let payments = [];
+
+    // FUNGSI LOAD DATA (Placeholder untuk integrasi GAS)
+    async function loadSettings() {
+      try {
+        const response = await fetch('/api/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'get_settings_data' })
+        });
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+          // Isi form dasar
+          document.getElementById('set_wa').value = result.data.waAdmin || '';
+          document.getElementById('set_countdown').value = result.data.countdown || '';
+          document.getElementById('set_url').value = result.data.baseUrlPayment || '';
+          document.getElementById('set_qris').value = result.data.qrisUtama || '';
+          
+          categories = result.data.categories || [];
+          payments = result.data.payments || [];
+          
+          renderCategories();
+          renderPayments();
+        } else {
+          showToast('Gagal memuat setting: ' + result.message);
+        }
+      } catch (error) {
+        showToast('Error koneksi saat memuat data setting.');
+      }
+    }
+
+    // --- KATEGORI LOGIC ---
+    function renderCategories() {
+      const tbody = document.getElementById('tableCategory');
+      tbody.innerHTML = '';
+      categories.forEach((cat, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${cat.nama}</td>
+            <td>Rp ${Number(cat.harga).toLocaleString('id-ID')}</td>
+            <td><button class="btn-danger" onclick="removeCategory(${index})">Hapus</button></td>
+          </tr>
+        `;
+      });
+    }
+
+    function addCategory() {
+      const name = document.getElementById('new_cat_name').value.trim();
+      const price = document.getElementById('new_cat_price').value.trim();
+      if(name && price) {
+        categories.push({ nama: name, harga: price });
+        document.getElementById('new_cat_name').value = '';
+        document.getElementById('new_cat_price').value = '';
+        renderCategories();
+      }
+    }
+
+    function removeCategory(index) {
+      categories.splice(index, 1);
+      renderCategories();
+    }
+
+    // --- PAYMENT LOGIC ---
+    function renderPayments() {
+      const tbody = document.getElementById('tablePayment');
+      tbody.innerHTML = '';
+      payments.forEach((pay, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${pay.metode}</td>
+            <td>${pay.no}</td>
+            <td>${pay.nama}</td>
+            <td><button class="btn-danger" onclick="removePayment(${index})">Hapus</button></td>
+          </tr>
+        `;
+      });
+    }
+
+    function addPayment() {
+      const method = document.getElementById('new_pay_method').value.trim();
+      const no = document.getElementById('new_pay_no').value.trim();
+      const name = document.getElementById('new_pay_name').value.trim();
+      if(method && no && name) {
+        payments.push({ metode: method, no: no, nama: name });
+        document.getElementById('new_pay_method').value = '';
+        document.getElementById('new_pay_no').value = '';
+        document.getElementById('new_pay_name').value = '';
+        renderPayments();
+      }
+    }
+
+    function removePayment(index) {
+      payments.splice(index, 1);
+      renderPayments();
+    }
+
+    // --- SIMPAN SEMUA DATA KE BACKEND ---
+    async function saveAllSettings() {
+      const btn = document.getElementById('btnSaveAll');
+      const loader = document.getElementById('loaderSave');
+      btn.disabled = true;
+      loader.style.display = 'inline-block';
+
+      const payloadData = {
+        general: {
+          waAdmin: document.getElementById('set_wa').value,
+          countdown: document.getElementById('set_countdown').value,
+          baseUrlPayment: document.getElementById('set_url').value,
+          qrisUtama: document.getElementById('set_qris').value
+        },
+        categories: categories,
+        payments: payments
+      };
+
+      try {
+        const response = await fetch('/api/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update_settings_data', payload: payloadData })
+        });
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+          showToast('Semua pengaturan berhasil disimpan!');
+        } else {
+          showToast('Gagal menyimpan: ' + result.message);
+        }
+      } catch (error) {
+        showToast('Terjadi kesalahan koneksi.');
+      }
+      
+      btn.disabled = false;
+      loader.style.display = 'none';
+    }
+
+    window.onload = loadSettings;
+  </script>
+</body>
+</html>
