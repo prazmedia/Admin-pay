@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Jenka Project</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* CSS Native Minimalis & Responsif */
+    :root{--p:#4f46e5;--ph:#4338ca;--bg:#f3f4f6;--c:#ffffff;--t:#1f2937;--ts:#6b7280;--b:#e5e7eb;--succ:#10b981;--warn:#f59e0b;--r:12px;}
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif}
+    body{background:var(--bg);color:var(--t);line-height:1.5}
+    .navbar{background:var(--c);padding:15px 20px;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+    .nav-brand{font-weight:800;font-size:18px;color:var(--p)}
+    .nav-links a{margin-left:15px;text-decoration:none;color:var(--ts);font-weight:600;font-size:14px;transition:color 0.2s}
+    .nav-links a.active,.nav-links a:hover{color:var(--p)}
+    .container{max-width:1100px;margin:20px auto;padding:0 20px}
+    
+    /* Box Counter */
+    .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-bottom:30px}
+    .card{background:var(--c);padding:20px;border-radius:var(--r);box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);border:1px solid var(--b)}
+    .card-title{font-size:13px;color:var(--ts);font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px}
+    .card-value{font-size:28px;font-weight:800;color:var(--t)}
+    
+    /* Tabel */
+    .table-container{background:var(--c);border-radius:var(--r);box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);border:1px solid var(--b);overflow-x:auto;margin-bottom:40px}
+    table{width:100%;border-collapse:collapse;min-width:800px}
+    th,td{padding:15px 20px;text-align:left;border-bottom:1px solid var(--b);font-size:14px}
+    th{background:#f9fafb;font-weight:600;color:var(--ts);text-transform:uppercase;font-size:12px;letter-spacing:0.5px}
+    tr:hover{background:#f9fafb}
+    
+    /* Badges & Buttons */
+    .badge{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
+    .badge-pending{background:#fef3c7;color:#d97706}
+    .badge-paid{background:#d1fae5;color:#059669}
+    .btn-action{background:var(--bg);border:1px solid var(--b);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;margin-right:5px;transition:all 0.2s}
+    .btn-action:hover{background:var(--b)}
+    .btn-copy{color:var(--p);border-color:var(--p);background:#e0e7ff}
+    .btn-copy:hover{background:var(--p);color:#fff}
+    
+    /* Modal / Pop-up Detail */
+    .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+    .modal{background:#fff;padding:25px;border-radius:16px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
+    .modal h3{margin-bottom:15px;color:var(--t);border-bottom:1px solid var(--b);padding-bottom:10px}
+    .modal-content{font-size:14px;color:var(--ts);margin-bottom:20px;line-height:1.6}
+    .btn-close{background:var(--t);color:#fff;border:none;padding:10px 15px;border-radius:8px;font-weight:600;cursor:pointer;width:100%}
+    
+    #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:1100}
+    @media(max-width:600px){.summary-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+
+  <div id="toast">Pesan disini</div>
+
+  <!-- Navbar -->
+  <div class="navbar">
+    <div class="nav-brand">Jenka Admin</div>
+    <div class="nav-links">
+      <a href="/dashboard.html" class="active">Dashboard</a>
+      <a href="/setting.html">Setting</a>
+      <a href="#" onclick="logout()">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Ringkasan / Counter -->
+    <div class="summary-grid">
+      <div class="card">
+        <div class="card-title">Total Pesanan</div>
+        <div class="card-value" id="countTotal">0</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Pesanan Dibayar</div>
+        <div class="card-value" id="countPaid">0</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Total Pendapatan (Rp)</div>
+        <div class="card-value" id="countRevenue">0</div>
+      </div>
+    </div>
+
+    <!-- Tabel Daftar Pesanan -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ID Pesanan</th>
+            <th>Tanggal</th>
+            <th>Nama Pemesan</th>
+            <th>Total Bayar</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="6" style="text-align:center;">Memuat data pesanan...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal Detail Pesanan -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal">
+      <h3>Detail Pesanan <span id="modalOrderId"></span></h3>
+      <div class="modal-content" id="modalContent">
+        <!-- Detail JSON akan di-render di sini -->
+      </div>
+      <button class="btn-close" onclick="closeModal()">Tutup</button>
+    </div>
+  </div>
+
+  <script>
+    // 1. Verifikasi Keamanan Akses
+    if (!localStorage.getItem('jenka_admin_token')) {
+      window.location.href = '/login.html';
+    }
+
+    let ordersData = []; // Menyimpan data master dari backend
+    let baseUrlPayment = 'https://domainanda.com/payment.html'; // Default sementara
+
+    function logout() {
+      localStorage.removeItem('jenka_admin_token');
+      window.location.href = '/login.html';
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.style.opacity = '1';
+      setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+    }
+
+    // 2. Fetch Data dari Backend via Proxy (Disiapkan untuk langkah GAS selanjutnya)
+    async function fetchDashboardData() {
+      try {
+        // Nanti kita akan memanggil endpoint /api/admin dengan action 'get_dashboard_data'
+        const response = await fetch('/api/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'get_dashboard_data' })
+        });
+        
+        const result = await response.json();
+        if (result.status === 'success') {
+          ordersData = result.data.orders;
+          baseUrlPayment = result.data.baseUrlPayment || window.location.origin + '/payment.html';
+          renderDashboard();
+        } else {
+          document.getElementById('tableBody').innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;">Gagal memuat data: ${result.message}</td></tr>`;
+        }
+      } catch (error) {
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="6" style="text-align:center;color:red;">Error koneksi ke server.</td></tr>`;
+      }
+    }
+
+    // 3. Render Ringkasan & Tabel
+    function renderDashboard() {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+      
+      let countTotal = ordersData.length;
+      let countPaid = 0;
+      let countRevenue = 0;
+
+      // Render Baris Tabel (Di-reverse agar pesanan terbaru di atas)
+      ordersData.slice().reverse().forEach((order, index) => {
+        // Hitung statistik
+        if (order.status === 'PAID') {
+          countPaid++;
+          countRevenue += order.totalBayar;
+        }
+
+        const badgeClass = order.status === 'PAID' ? 'badge-paid' : 'badge-pending';
+        const rawIndex = ordersData.length - 1 - index; // Menyimpan index asli untuk modal detail
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>#${order.id}</strong></td>
+          <td>${new Date(order.tanggal).toLocaleDateString('id-ID')}</td>
+          <td>${order.nama} <br><small>${order.wa}</small></td>
+          <td>Rp ${order.totalBayar.toLocaleString('id-ID')}</td>
+          <td><span class="badge ${badgeClass}">${order.status}</span></td>
+          <td>
+            <button class="btn-action" onclick="showDetail(${rawIndex})">Detail</button>
+            <button class="btn-action btn-copy" onclick="copyLink('${order.id}')">Copy Link</button>
+            <button class="btn-action" onclick="changeStatus('${order.id}', '${order.status}')">Ubah Status</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Update Box Counter
+      document.getElementById('countTotal').textContent = countTotal;
+      document.getElementById('countPaid').textContent = countPaid;
+      document.getElementById('countRevenue').textContent = 'Rp ' + countRevenue.toLocaleString('id-ID');
+
+      if(ordersData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Belum ada pesanan masuk.</td></tr>`;
+      }
+    }
+
+    // 4. Aksi: Tampilkan Detail
+    function showDetail(index) {
+      const order = ordersData[index];
+      let detailHtml = `
+        <p><strong>Kategori:</strong> ${order.kategori} (${order.jenis})</p>
+        <p><strong>Nominal Asli:</strong> Rp ${order.hargaDasar.toLocaleString('id-ID')}</p>
+        <p><strong>Kode Unik:</strong> ${order.kodeUnik}</p>
+        <hr style="border:0;border-top:1px dashed #e5e7eb;margin:15px 0;">
+        <h4 style="margin-bottom:10px;color:#1f2937;">Data Undangan (JSON)</h4>
+      `;
+      
+      try {
+        const jsonDetail = JSON.parse(order.detailUndangan);
+        detailHtml += `<pre style="background:#f3f4f6;padding:10px;border-radius:8px;font-size:12px;overflow-x:auto;">${JSON.stringify(jsonDetail, null, 2)}</pre>`;
+      } catch(e) {
+        detailHtml += `<p>Data detail tidak dapat diproses.</p>`;
+      }
+
+      document.getElementById('modalOrderId').textContent = '#' + order.id;
+      document.getElementById('modalContent').innerHTML = detailHtml;
+      document.getElementById('detailModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('detailModal').style.display = 'none';
+    }
+
+    // 5. Aksi: Copy Link Pembayaran
+    function copyLink(id) {
+      // Memastikan URL formatnya bersih dari slash berlebih
+      const cleanBaseUrl = baseUrlPayment.replace(/\/$/, '');
+      const link = `${cleanBaseUrl}?id=${id}`;
+      navigator.clipboard.writeText(link).then(() => {
+        showToast('Link pembayaran berhasil disalin!');
+      });
+    }
+
+    // 6. Aksi: Ubah Status Pembayaran (Disiapkan untuk GAS)
+    async function changeStatus(id, currentStatus) {
+      const newStatus = currentStatus === 'PENDING' ? 'PAID' : 'PENDING';
+      const confirmMsg = `Ubah status pesanan #${id} menjadi ${newStatus}?`;
+      
+      if(confirm(confirmMsg)) {
+        showToast('Memperbarui status...');
+        
+        try {
+          const response = await fetch('/api/admin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'update_status', payload: { orderId: id, status: newStatus } })
+          });
+          const result = await response.json();
+          
+          if(result.status === 'success') {
+            showToast('Status berhasil diubah!');
+            fetchDashboardData(); // Refresh tabel
+          } else {
+            showToast('Gagal: ' + result.message);
+          }
+        } catch(e) {
+          showToast('Terjadi kesalahan koneksi.');
+        }
+      }
+    }
+
+    // Jalankan saat halaman dibuka
+    window.onload = fetchDashboardData;
+  </script>
+</body>
+</html>
